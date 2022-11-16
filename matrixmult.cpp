@@ -1,55 +1,62 @@
 #include <iostream>
 #include <stdlib.h>
 #include <time.h>
+#include "naive_mm.cpp"
+
 using namespace std;
+
+double f_a(i,j) {
+    return 1;
+    return rand() % 100;
+}
+
+double f_b(i,j) {
+    return 1;
+    return rand() % 100;
+}
+
 
 int main()
 {
-    int a[10][10], b[10][10], mult[10][10], r1, c1, r2, c2, i, j, k;
-
-    r1 = 4;
-    c1 = 4;
-    r2 = 4;
-    c2 = 4;
-
     srand (time(NULL));
 
+    int i,j;
+    int r1 = 4;
+    int c1 = 4;
+    double a[r1*c1];
+
+    int r2 = 4;
+    int c2 = 4;
+    double b[r2*c2];
+    
+    double* mult = (double *) malloc(r1*c2*sizeof(double)); 
+
+    assert(c1==r2);
+
+
+    // Initialize a and b using functionis of your choice
     for(i = 0; i < r1; ++i)
         for(j = 0; j < c1; ++j)
-        {
-            a[i][j] = rand() % 100;
-        }
+            a[idx(i,j,r1)] = f_a(i,j);
 
     for(i = 0; i < r2; ++i)
         for(j = 0; j < c2; ++j)
-        {
-            b[i][j] = rand() % 100;
-        }
-
-    // Initializing elements of matrix mult to 0.
-    for(i = 0; i < r1; ++i)
-        for(j = 0; j < c2; ++j)
-        {
-            mult[i][j]=0;
-        }
+            b[idx(i,j,r2)] = f_b(i,j);
 
     // Multiplying matrix a and b and storing in array mult.
-    for(i = 0; i < r1; ++i)
-        for(j = 0; j < c2; ++j)
-            for(k = 0; k < c1; ++k)
-            {
-                mult[i][j] += a[i][k] * b[k][j];
-            }
+    naive_mm(a,b,mult,r1,c1,c2);
 
     // Displaying the multiplication of two matrix.
     cout << endl << "Output Matrix: " << endl;
     for(i = 0; i < r1; ++i)
-    for(j = 0; j < c2; ++j)
-    {
-        cout << " " << mult[i][j];
-        if(j == c2-1)
-            cout << endl;
-    }
+        for(j = 0; j < c2; ++j)
+        {
+            cout << " " << mult[idx(i,j,r1)];
+            if(j == c2-1)
+                cout << endl;
+        }
+
+    delete mult;
 
     return 0;
 }
