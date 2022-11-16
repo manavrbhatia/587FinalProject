@@ -1,20 +1,22 @@
 #include <iostream>
 #include <stdlib.h>
 #include <time.h>
-#include "naive_mm.cpp"
+#include <cassert>
+#include <omp.h>
+//#include "naive_mm.cpp"
+#include "omp_naive.cpp"
 
 using namespace std;
 
-double f_a(i,j) {
+double f_a(int i,int j) {
     return 1;
     return rand() % 100;
 }
 
-double f_b(i,j) {
+double f_b(int i,int j) {
     return 1;
     return rand() % 100;
 }
-
 
 int main()
 {
@@ -32,7 +34,6 @@ int main()
     double* mult = (double *) malloc(r1*c2*sizeof(double)); 
 
     assert(c1==r2);
-
 
     // Initialize a and b using functionis of your choice
     for(i = 0; i < r1; ++i)
