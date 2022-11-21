@@ -45,7 +45,7 @@ int main()
             b[idx(i,j,r2)] = f_b(i,j);
 
     // Multiplying matrix a and b and storing in array mult.
-    naive_mm(a,b,mult,r1,c1,c2);
+    mat_multiply(a,b,mult,r1,c1,c2);
 
     // Displaying the multiplication of two matrix.
     cout << endl << "Output Matrix: " << endl;

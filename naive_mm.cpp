@@ -15,7 +15,7 @@ using namespace std;
  * a * b = mult -> (d11,d12) * (d12,d22) = (d11,d22)
  */
 
-void naive_mm(double* a, double* b, double* mult, int d11, int d12, int d22) {
+void mat_multiply(double* a, double* b, double* mult, int d11, int d12, int d22) {
     // Initializing elements of matrix mult to 0.
     for(int i = 0; i < d11; ++i)
         for(int j = 0; j < d22; ++j)
