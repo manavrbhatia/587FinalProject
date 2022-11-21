@@ -25,12 +25,12 @@ int main()
     srand (time(NULL));
 
     int i,j;
-    int r1 = 4;
-    int c1 = 4;
+    int r1 = 10000;
+    int c1 = 10000;
     double a[r1*c1];
 
-    int r2 = 4;
-    int c2 = 4;
+    int r2 = 10000;
+    int c2 = 10000;
     double b[r2*c2];
     
     double* mult = (double *) malloc(r1*c2*sizeof(double)); 
