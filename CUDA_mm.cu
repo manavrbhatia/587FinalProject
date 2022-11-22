@@ -1,3 +1,5 @@
+#define TILE_WIDTH 16; 
+
 __global__ void naive_mult(double *A, double *B, double *C, int size){
     int row = blockIdx.y * blockDim.y + threadIdx.y;
     int col = blockIdx.x * blockDim.x + threadIdx.x;
@@ -10,6 +12,32 @@ __global__ void naive_mult(double *A, double *B, double *C, int size){
         }
         C[row*size + col] = value; 
     }
+}
+
+__global__ void naive_mult_tile(double *A, double *B, double *C, int size){
+    __shared__ subA[TILE_WIDTH][TILE_WIDTH];
+    __shared__ subB[TILE_WIDTH][TILE_WIDTH];
+    
+    int blockRow = blockIdx.y;
+    int blockCol = blockIdx.x;
+    int threadRow = threadIdx.y;
+    int threadCol = threadIdx.x;
+
+    int row = blockRow*TILE_WIDTH + blockCol; 
+    int col = threadRow*TILE_WIDTH + thead_col; 
+
+    double value = 0;
+    for(int sub_i = 0; sub_i < width/TILE_WIDTH; sub_i++) {
+        subA[threadRow][threadCol] = A[idx(row, sub_i*TILE_WIDTH+threadCol, width)];
+        subB[threadRow][threadCol] = B[idx(i*TILE_WIDTH+threadRow, col, width)];
+        __syncthreads();
+   
+        for(int k = 0; k < TILE_WIDTH; k++){
+            value += subA[threadRow][k] * subB[k][threadCol]; 
+        }
+        _synchthreads();
+    }
+    C[row*size + col] = value; 
 }
 
 double f_a(int i,int j) {
