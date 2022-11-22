@@ -1,5 +1,6 @@
-#define TILE_WIDTH 16; 
 #include<cuda_runtime.h>
+
+#define TILE_WIDTH 16
 #define idx(x,y,M) (M*(x)+y)
 
 __global__ void naive_mult(double *A, double *B, double *C, int size){
@@ -16,8 +17,8 @@ __global__ void naive_mult(double *A, double *B, double *C, int size){
 }
 
 __global__ void naive_mult_tile(double *A, double *B, double *C, int size){
-    __shared__ subA[TILE_WIDTH][TILE_WIDTH];
-    __shared__ subB[TILE_WIDTH][TILE_WIDTH];
+    __shared__  double subA[TILE_WIDTH][TILE_WIDTH];
+    __shared__ double subB[TILE_WIDTH][TILE_WIDTH];
     
     int blockRow = blockIdx.y;
     int blockCol = blockIdx.x;
@@ -25,30 +26,20 @@ __global__ void naive_mult_tile(double *A, double *B, double *C, int size){
     int threadCol = threadIdx.x;
 
     int row = blockRow*TILE_WIDTH + blockCol; 
-    int col = threadRow*TILE_WIDTH + thead_col; 
+    int col = threadRow*TILE_WIDTH + threadCol; 
 
     double value = 0;
-    for(int sub_i = 0; sub_i < width/TILE_WIDTH; sub_i++) {
-        subA[threadRow][threadCol] = A[idx(row, sub_i*TILE_WIDTH+threadCol, width)];
-        subB[threadRow][threadCol] = B[idx(i*TILE_WIDTH+threadRow, col, width)];
+    for(int sub_i = 0; sub_i < size/TILE_WIDTH; sub_i++) {
+        subA[threadRow][threadCol] = A[idx(row, sub_i*TILE_WIDTH+threadCol, size)];
+        subB[threadRow][threadCol] = B[idx(sub_i*TILE_WIDTH+threadRow, col, size)];
         __syncthreads();
    
         for(int k = 0; k < TILE_WIDTH; k++){
             value += subA[threadRow][k] * subB[k][threadCol]; 
         }
-        _synchthreads();
+        __syncthreads();
     }
     C[row*size + col] = value; 
-}
-
-double f_a(int i,int j) {
-    return 1;
-    return rand() % 100;
-}
-
-double f_b(int i,int j) {
-    return 1;
-    return rand() % 100;
 }
 
 void mat_multiply(double* A, double* B, double* C, int d11, int d12, int d22) {
@@ -74,7 +65,7 @@ void mat_multiply(double* A, double* B, double* C, int d11, int d12, int d22) {
     dim3 numBlocks((d11/tbp.x<1)? 1:d11/tbp.x, (d11/tbp.y<1)? 1:d11/tbp.y);
 
     cudaEventRecord(time_s);
-    naive_mult <<< numBlocks, tbp >>> (dA, dB, dC, d12);
+    naive_mult_tile <<< numBlocks, tbp >>> (dA, dB, dC, d12);
     cudaEventRecord(time_e);
     cudaEventSynchronize(time_e);
 
