@@ -6,7 +6,7 @@
 //#include "naive_mm.cpp"
 //#include "omp_naive.cpp"
 #include "CUDA_mm.cu"
-#define idx(x,y,M) (M*(x)+y)
+#define idx(x,y,M) (M*(x)+(y))
 
 using namespace std;
 
@@ -25,12 +25,12 @@ int main()
     srand (time(NULL));
 
     int i,j;
-    int r1 = 10000;
-    int c1 = 10000;
+    int r1 = 5000;
+    int c1 = 5000;
     double a[r1*c1];
 
-    int r2 = 10000;
-    int c2 = 10000;
+    int r2 = 5000;
+    int c2 = 5000;
     double b[r2*c2];
     
     double* mult = (double *) malloc(r1*c2*sizeof(double)); 

@@ -1,7 +1,7 @@
 #include<cuda_runtime.h>
 
-#define TILE_WIDTH 16
-#define idx(x,y,M) (M*(x)+y)
+#define TILE_WIDTH 8
+#define idx(x,y,M) (M*(x)+(y))
 
 __global__ void naive_mult(double *A, double *B, double *C, int size){
     int row = blockIdx.y * blockDim.y + threadIdx.y;
@@ -25,8 +25,8 @@ __global__ void naive_mult_tile(double *A, double *B, double *C, int size){
     int threadRow = threadIdx.y;
     int threadCol = threadIdx.x;
 
-    int row = blockRow*TILE_WIDTH + blockCol; 
-    int col = threadRow*TILE_WIDTH + threadCol; 
+    int row = blockRow*TILE_WIDTH + threadRow; 
+    int col = blockCol*TILE_WIDTH + threadCol; 
 
     double value = 0;
     for(int sub_i = 0; sub_i < size/TILE_WIDTH; sub_i++) {
@@ -70,7 +70,8 @@ void mat_multiply(double* A, double* B, double* C, int d11, int d12, int d22) {
     cudaEventSynchronize(time_e);
 
     float time = 0;
-    printf("Time the function took is %.4fs", cudaEventElapsedTime(&time, time_s, time_e));
+    cudaEventElapsedTime(&time, time_s, time_e);
+    printf("Time the function took is %.5fns", time);
     cudaMemcpy(C,dC,(d11*d22)*(sizeof(double)),cudaMemcpyDeviceToHost);
 
     cudaFree(dA);
