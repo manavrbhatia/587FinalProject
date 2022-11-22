@@ -47,6 +47,7 @@ int main()
 
     // Multiplying matrix a and b and storing in array mult.
     mat_multiply(a,b,mult,r1,c1,c2);
+    o
 
     // Displaying the multiplication of two matrix.
     cout << endl << "Output Matrix: " << endl;
