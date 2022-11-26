@@ -9,5 +9,5 @@
 #SBATCH --account=eecs587f22_class
 #SBATCH --output=outputs/slurm-output.log
 
-nvcc -o matrixmult_CUDA.o matrixmult.cu
-./matrixmult_CUDA.o > outputs/cuda/out_naive_matrixmult.txt
+nvcc -o bin/matrixmult_CUDA.o matrixmult.cu
+./bin/matrixmult_CUDA.o > outputs/cuda/out_naive_matrixmult.txt

@@ -10,5 +10,7 @@
 #SBATCH --account=eecs587f22_class
 #SBATCH --output=outputs/slurm-output.log
 
+module load openmpi
 > outputs/omp/omp_mm.txt
-OMP_NUM_THREADS="32" ./matrixmult.o >> outputs/omp/omp_mm.txt
+g++ -o bin/matrixmult.o -fopenmp matrixmult.cu
+OMP_NUM_THREADS="32" ./bin/matrixmult.o >> outputs/omp/omp_mm.txt
