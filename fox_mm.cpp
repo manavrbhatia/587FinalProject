@@ -75,7 +75,7 @@ int main(int argc, char**argv) {
     MPI_Scatterv(B, counts, disps, resized, B_sub, N*N, MPI_DOUBLE, 0, MPI_COMM_WORLD);
     for (int i = 0; i<N*N; i++) C_sub[i]=0;
 
-    //Start Fox Algorithm changes
+    // This loop is the only main change between Fox and Cannon's
     for(int i = 0; i < p_rt; i++){
         // If you are a diagonal, broadcast; Else take the broadcast then multiply
         if (p_j == (p_i+i) % p_rt){
@@ -105,12 +105,11 @@ int main(int argc, char**argv) {
         MPI_Send(B_sub, N*N, MPI_DOUBLE, idx(p_i,(p_j+1+i)%p_rt,p_rt), 0, MPI_COMM_WORLD);
         MPI_Recv(B_sub, N*N, MPI_DOUBLE, idx(p_i,(p_j+1+i)%p_rt,p_rt), 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
     }
-    //End Fox Algorithm changes
 
 	// Variables to store sum and square sum
 	double n_sum= 0.0, s_sum= 0.0;
 
-    // TODO: Add a way to retrieve the complete C from this procedure
+    // TODO: Add a way to retrieve the complete C from this procedure; Should be Gatherv given displs is correct;
 	for(int i = 0; i<N; i++){
 		for(int j=0; j<N; j++){
 			double val = C_sub[idx(i,j,N)];

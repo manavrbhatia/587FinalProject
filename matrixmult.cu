@@ -2,9 +2,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <cassert>
-#include <omp.h>
-//#include "naive_mm.cpp"
-//#include "omp_naive.cpp"
+
 #include "CUDA_mm.cu"
 #define idx(x,y,M) (M*(x)+(y))
 
