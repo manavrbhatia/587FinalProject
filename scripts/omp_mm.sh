@@ -12,5 +12,5 @@
 
 module load openmpi
 > outputs/omp/omp_mm.txt
-g++ -o bin/matrixmult.o -fopenmp matrixmult.cu
+g++ -o bin/matrixmult.o -fopenmp matrixmult.cpp
 OMP_NUM_THREADS="32" ./bin/matrixmult.o >> outputs/omp/omp_mm.txt

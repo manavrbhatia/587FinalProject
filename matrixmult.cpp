@@ -5,8 +5,8 @@
 #include <omp.h>
 //#include "naive_mm.cpp"
 //#include "omp_naive.cpp"
-#include "CUDA_mm.cu"
-#define idx(x,y,M) (M*(x)+y)
+#include "mpi_strassens.cpp"
+#define idx(x,y,M) (M*(x)+(y))
 
 using namespace std;
 
