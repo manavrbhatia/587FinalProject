@@ -1,5 +1,5 @@
 #include <time.h>
-#define idx(x,y,M) (M*(x)+y)
+#define idx(x,y,M) (M*(x)+(y))
 using namespace std;
 
 /* Performs strassens matrix multiplication using given matrices and their dimension.
@@ -76,15 +76,15 @@ void mat_multiply(double* a, double* b, double* mult, int d11, int d12, int d22)
 
         for (int i = 0; i < newSize; i++) {
             for (int j = 0; j < newSize; j++) {
-                a11[idx(i,j,d11)] = a[idx(i,j,d11)];
-                a12[idx(i,j,d11)] = a[idx(i,(j + newSize),d11)];
-                a21[idx(i,j,d11)] = a[idx((i + newSize),j,d11)];    
-                a22[idx(i,j,d11)] = a[idx((i + newSize),(j + newSize),d11)];
+                a11[idx(i,j,newSize)] = a[idx(i,j,d11)];
+                a12[idx(i,j,newSize)] = a[idx(i,(j + newSize),d11)];
+                a21[idx(i,j,newSize)] = a[idx((i + newSize),j,d11)];    
+                a22[idx(i,j,newSize)] = a[idx((i + newSize),(j + newSize),d11)];
 
-                b11[idx(i,j,d11)] = b[idx(i,j,d11)];
-                b12[idx(i,j,d11)] = b[idx(i,(j + newSize),d11)];
-                b21[idx(i,j,d11)] = b[idx((i + newSize),j,d11)];
-                b22[idx(i,j,d11)] = b[idx((i + newSize),(j + newSize),d11)];
+                b11[idx(i,j,newSize)] = b[idx(i,j,d11)];
+                b12[idx(i,j,newSize)] = b[idx(i,(j + newSize),d11)];
+                b21[idx(i,j,newSize)] = b[idx((i + newSize),j,d11)];
+                b22[idx(i,j,newSize)] = b[idx((i + newSize),(j + newSize),d11)];
             }
         }
 
@@ -153,7 +153,7 @@ void mat_multiply(double* a, double* b, double* mult, int d11, int d12, int d22)
                 mult[idx(i,j,newSize)] = c11[idx(i,j,newSize)];
                 mult[idx(i,(j + newSize),newSize)] = c12[idx(i,j,newSize)];
                 mult[idx((i + newSize),j,newSize)] = c21[idx(i,j,newSize)];
-                mult[idx((i + newSize),(j + newSize),d11)] = c22[idx(i,j,newSize)];
+                mult[idx((i + newSize),(j + newSize),newSize)] = c22[idx(i,j,newSize)];
             }
         }
     }
