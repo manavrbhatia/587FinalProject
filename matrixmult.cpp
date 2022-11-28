@@ -47,10 +47,12 @@ int main()
             b[idx(i,j,r2)] = f_b(i,j);
 
     // Multiplying matrix a and b and storing in array mult.
+    double start = omp_get_wtime(); 
     mat_multiply(a,b,mult,r1,c1,c2);
-    o
+    double end = omp_get_wtime(); 
 
     // Displaying the multiplication of two matrix.
+    cout << "Finished run in " << end-start << " seconds\n";
     cout << endl << "Output Matrix: " << endl;
     for(i = 0; i < r1; ++i)
         for(j = 0; j < c2; ++j)

@@ -163,10 +163,11 @@ void mat_multiply(double* a, double* b, double* mult, int d11, int d12, int d22)
             #pragma omp taskwait
         }
 
-        # pragma omp parallel 
+        # pragma omp parallel sections
         {
         // c11 = p1 + p2 - p4 + p6
-            #pragma omp task {
+            #pragma omp task 
+            {
                 add(p1, p2, tempA, newSize); // p1 + p2
                 add(tempA, p6, tempB, newSize); // (p1 + p2) + p6
                 sub(tempB, p4, c11, newSize); // (p5 + p4 + p6) - p2
