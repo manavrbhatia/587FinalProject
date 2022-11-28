@@ -1,4 +1,5 @@
 #include <time.h>
+#include <stdlib.h>
 #define idx(x,y,M) (M*(x)+(y))
 using namespace std;
 
@@ -138,7 +139,7 @@ void mat_multiply(double* a, double* b, double* mult, int d11, int d12, int d22)
         sub(tempB, p4, c11, newSize); // (p5 + p4 + p6) - p2
 
         // c12 = p4 - p5
-        sub(p1, p5, c12, newSize);
+        sub(p4, p5, c12, newSize);
 
         // c21 = p6 + p7
         add(p6, p7, c21, newSize);
@@ -150,10 +151,10 @@ void mat_multiply(double* a, double* b, double* mult, int d11, int d12, int d22)
 
         for (int i = 0; i < newSize ; i++) {
             for (int j = 0 ; j < newSize ; j++) {
-                mult[idx(i,j,newSize)] = c11[idx(i,j,newSize)];
-                mult[idx(i,(j + newSize),newSize)] = c12[idx(i,j,newSize)];
-                mult[idx((i + newSize),j,newSize)] = c21[idx(i,j,newSize)];
-                mult[idx((i + newSize),(j + newSize),newSize)] = c22[idx(i,j,newSize)];
+                mult[idx(i,j,d11)] = c11[idx(i,j,newSize)];
+                mult[idx(i,(j + newSize),d11)] = c12[idx(i,j,newSize)];
+                mult[idx((i + newSize),j,d11)] = c21[idx(i,j,newSize)];
+                mult[idx((i + newSize),(j + newSize),d11)] = c22[idx(i,j,newSize)];
             }
         }
     }
