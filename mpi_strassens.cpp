@@ -92,7 +92,7 @@ void mat_multiply(double* a, double* b, double* mult, int d11, int d12, int d22)
         }
 
         
-        # pragma omp parallel sections nowait
+        # pragma omp parallel sections 
         {
             // s1 = b12 - b22
             #pragma omp section
@@ -135,7 +135,8 @@ void mat_multiply(double* a, double* b, double* mult, int d11, int d12, int d22)
             add(b11, b12, s10, newSize);
         }
 
-        # pragma omp parallel sections nowait
+        if (d11!=8) {
+        # pragma omp parallel sections 
         {
             #pragma omp section
             mat_multiply(s7, s8, p1, newSize, newSize, newSize);
@@ -158,8 +159,27 @@ void mat_multiply(double* a, double* b, double* mult, int d11, int d12, int d22)
             #pragma omp section
             mat_multiply(s3, b11, p7, newSize, newSize, newSize);
         }
+        }
+        else{
+            mat_multiply(s7, s8, p1, newSize, newSize, newSize);
 
-        # pragma omp parallel nowait
+            mat_multiply(s5, s6, p2, newSize, newSize, newSize);
+
+            mat_multiply(s9, s10, p3, newSize, newSize, newSize);
+
+            mat_multiply(s2, b22, p4, newSize, newSize, newSize);
+
+            mat_multiply(a11, s1, p5, newSize, newSize, newSize);
+
+            mat_multiply(a22, s4, p6, newSize, newSize, newSize);
+
+            mat_multiply(s3, b11, p7, newSize, newSize, newSize);
+        }
+
+
+        }
+
+        # pragma omp parallel 
         {
         // c11 = p1 + p2 - p4 + p6
             #pragma omp section 
