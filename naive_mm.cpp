@@ -17,8 +17,7 @@ using namespace std;
 
 void mat_multiply(double* a, double* b, double* mult, int d11, int d12, int d22) {
     // Initializing elements of matrix mult to 0.
-    time_t start, end; 
-    start = clock();
+    auto start = clock();
     for(int i = 0; i < d11; ++i)
         for(int j = 0; j < d22; ++j)
             mult[idx(i,j,d11)]=0;
@@ -28,7 +27,7 @@ void mat_multiply(double* a, double* b, double* mult, int d11, int d12, int d22)
         for(int j = 0; j < d22; ++j)
             for(int k = 0; k < d12; ++k)
                 mult[idx(i,j,d11)] += a[idx(i,k,d11)] * b[idx(k,j,d12)];
-    end = clock();
-    printf("Took %fms to naively multiple the matrices.", double(end-start));
+    auto end = clock();
+    printf("Took %fms to naively multiple the matrices.", double(end-start)/CLOCKS_PER_SEC);
     return;
 }

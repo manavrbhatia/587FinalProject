@@ -32,16 +32,20 @@ void sub(double* a, double* b, double* c, int size){
     }
 }
 
-void mat_multiply(double* a, double* b, double* mult, int d11, int d12, int d22) {
-    // Initializing elements of matrix mult to 0.
-    time_t start, end; 
-    start = clock();
+void mult_small(double* a, double* b, double* c, int size){
+    for(int i = 0; i < size; ++i)
+        for(int j = 0; j < size; ++j)
+            for(int k = 0; k < size; ++k)
+                c[idx(i,j,size)] += a[idx(i,k,size)] * b[idx(k,j,size)];
+}
+
+void strassen_multiply(double* a, double* b, double* mult, int d11, int d12, int d22,int og_size) {
     for(int i = 0; i < d11; ++i)
         for(int j = 0; j < d22; ++j)
             mult[idx(i,j,d11)]=0;
 
-    if(d11 == 1){
-        mult[idx(0,0,d11)] = a[idx(0,0,d11)]*b[idx(0,0,d11)];
+    if(d11 <= 32) {
+        mult_small(a,b,mult,d11);
         return; 
     } else {
         int newSize = d11/2;
@@ -115,39 +119,39 @@ void mat_multiply(double* a, double* b, double* mult, int d11, int d12, int d22)
         // s8 = b21 + b22
         add(b21, b22, s8, newSize);
 
-        // s9 = a11 - a21
-        sub(a11, a21, s9, newSize);
+        // s9 = a21 - a11
+        sub(a21, a11, s9, newSize);
 
         // s10 = b11 + b12
         add(b11, b12, s10, newSize);
 
-        mat_multiply(s7, s8, p1, newSize, newSize, newSize);
+        strassen_multiply(s7, s8, p1, newSize, newSize, newSize, newSize);
 
-        mat_multiply(s5, s6, p2, newSize, newSize, newSize);
+        strassen_multiply(s5, s6, p2, newSize, newSize, newSize, newSize);
 
-        mat_multiply(s9, s10, p3, newSize, newSize, newSize);
+        strassen_multiply(s9, s10, p3, newSize, newSize, newSize, newSize);
 
-        mat_multiply(s2, b22, p4, newSize, newSize, newSize);
+        strassen_multiply(s2, b22, p4, newSize, newSize, newSize, newSize);
 
-        mat_multiply(a11, s1, p5, newSize, newSize, newSize);
+        strassen_multiply(a11, s1, p5, newSize, newSize, newSize, newSize);
 
-        mat_multiply(a22, s4, p6, newSize, newSize, newSize);
+        strassen_multiply(a22, s4, p6, newSize, newSize, newSize, newSize);
 
-        mat_multiply(s3, b11, p7, newSize, newSize, newSize);
+        strassen_multiply(s3, b11, p7, newSize, newSize, newSize, newSize);
 
         // c11 = p1 + p2 - p4 + p6
         add(p1, p2, tempA, newSize); // p1 + p2
         add(tempA, p6, tempB, newSize); // (p1 + p2) + p6
         sub(tempB, p4, c11, newSize); // (p5 + p4 + p6) - p2
 
-        // c12 = p4 - p5
-        sub(p4, p5, c12, newSize);
+        // c12 = p4 + p5
+        add(p4, p5, c12, newSize);
 
         // c21 = p6 + p7
         add(p6, p7, c21, newSize);
 
         // c22 = p2 - p3 + p5 - p7
-        sub(p2, p3, tempA, newSize); // p2 - p3
+        add(p2, p3, tempA, newSize); // p2 - p3
         sub(tempA, p7, tempB, newSize); // (p2 - p3) - p7
         add(tempB, p5, c22, newSize); // (p2 - p3 - p7) + p5
 
@@ -160,6 +164,11 @@ void mat_multiply(double* a, double* b, double* mult, int d11, int d12, int d22)
             }
         }
     }
-
+}
+void mat_multiply(double* a, double* b, double* mult, int d11, int d12, int d22) {
+    // Initializing elements of matrix mult to 0.
+    auto start = clock();;
+    strassen_multiply(a,b,mult,d11,d12,d22,d11);
+    printf("Took %fms to naively multiple the matrices.\n", (double)(clock()-start)/CLOCKS_PER_SEC);
     return;
 }

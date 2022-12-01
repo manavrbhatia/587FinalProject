@@ -3,9 +3,9 @@
 #include <time.h>
 #include <cassert>
 #include <math.h>
-#include "f.h"
 #include <cstdlib>
 #include <cstring>
+#include <chrono>
 
 
 //#include "naive_mm.cpp"
@@ -26,8 +26,7 @@ double f_a2(int i, int j, int size) {
 }
 
 double f_a(int i, int j, int size) {
-    return i*sin(i)+j*cos(j)+sqrt(i+j);
-    return idx(i,j,size) % (size/2) == 1 ? sin(idx(i,j,size)):0;
+    return 1;
 }
 
 double f_b1(int i, int j, int size) {
@@ -39,8 +38,7 @@ double f_b2(int i, int j, int size) {
 }
 
 double f_b(int i, int j, int size) {
-    return j*sin(j)+i*cos(i)+(i+j)*(i+j);
-    return idx(i,j,size) % (size/2) == 1 ? sin(idx(i,j,size)):0;
+    return 1;
 }
 
 int main(int argc, char** argv)

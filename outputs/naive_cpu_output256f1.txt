@@ -1,7 +1,6 @@
 Size is 256 Function is f1
 Using function 1
-Took 0.015311ms to naively multiple the matrices.
-
+Took 0.017888ms to naively multiple the matrices.
 Output Matrix: 
 
 The sum retrieved was -34433.909576 and the square sum was 5803285.983471
