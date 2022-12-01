@@ -1,0 +1,6 @@
+Size is 2048 Function is f2
+Using function 2
+Time the function took is 31.23674ns
+Output Matrix: 
+
+The sum retrieved was -11.757302 and the square sum was 4701.942617
