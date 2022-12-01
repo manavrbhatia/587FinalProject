@@ -34,6 +34,8 @@ void sub(double* a, double* b, double* c, int size){
 
 void mat_multiply(double* a, double* b, double* mult, int d11, int d12, int d22) {
     // Initializing elements of matrix mult to 0.
+    time_t start, end; 
+    start = clock();
     for(int i = 0; i < d11; ++i)
         for(int j = 0; j < d22; ++j)
             mult[idx(i,j,d11)]=0;
