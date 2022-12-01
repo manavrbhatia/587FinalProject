@@ -1,7 +1,7 @@
 Size is 2048 Function is f1
 Using function 1
 Number of threads: 32
-Took 4.501369 seconds to perform matrix multiplication.
+Took 1.796692 seconds to perform matrix multiplication.
 
 Output Matrix: 
 

@@ -1,6 +1,7 @@
 #include <time.h>
 #include <omp.h>
 #include <bits/stdc++.h>
+#define idx(x,y,M) (M*(x)+(y))
 
 using namespace std;
 
