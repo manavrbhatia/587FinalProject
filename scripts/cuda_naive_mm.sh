@@ -10,4 +10,7 @@
 #SBATCH --output=outputs/slurm-output.log
 
 nvcc -o bin/matrixmult_CUDA.o matrixmult.cu
-./bin/matrixmult_CUDA.o > outputs/cuda/out_naive_matrixmult.txt
+./bin/matrixmult_CUDA.o 256 f1 > outputs/cuda/naive_cuda_256_f1.txt
+./bin/matrixmult_CUDA.o 2048 f1 > outputs/cuda/naive_cuda_2048_f1.txt
+./bin/matrixmult_CUDA.o 256 f2 > outputs/cuda/naive_cuda_256_f2.txt
+./bin/matrixmult_CUDA.o 2048 f2 > outputs/cuda/naive_cuda_2048_f2.txt
