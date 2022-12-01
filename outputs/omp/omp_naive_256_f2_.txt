@@ -1,0 +1,8 @@
+Size is 256 Function is f2
+Using function 2
+Number of threads: 32
+Took 0.001440 seconds to perform matrix multiplication.
+
+Output Matrix: 
+
+The sum retrieved was 0.730954 and the square sum was 228.240251

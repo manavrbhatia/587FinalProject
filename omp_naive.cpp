@@ -2,7 +2,6 @@
 #include <omp.h>
 #include <bits/stdc++.h>
 
-#define idx(x,y,M) (M*(x)+y)
 using namespace std;
 
 /* Performs naive matrix multiplication using given matrices and their dimension.

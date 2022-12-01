@@ -12,5 +12,13 @@
 
 module load openmpi
 > outputs/omp/omp_mm.txt
-g++ -o bin/matrixmult.o -fopenmp matrixmult.cpp
-OMP_NUM_THREADS="32" ./bin/matrixmult.o >> outputs/omp/omp_mm.txt
+g++ -O3 -o bin/matrixmult.o -fopenmp matrixmult.cpp
+
+ALGO="omp_naive"
+OMP_NUM_THREADS="32" ./bin/matrixmult.o 256 f1 >> outputs/omp/$ALGO\_256_f1_$OMP_NUM_THREADS.txt
+OMP_NUM_THREADS="32" ./bin/matrixmult.o 2048 f1 >> outputs/omp/$ALGO\_2048_f1_$OMP_NUM_THREADS.txt
+OMP_NUM_THREADS="32" ./bin/matrixmult.o 256 f2 >> outputs/omp/$ALGO\_256_f2_$OMP_NUM_THREADS.txt
+OMP_NUM_THREADS="32" ./bin/matrixmult.o 2048 f2 >> outputs/omp/$ALGO\_2048_f2_$OMP_NUM_THREADS.txt
+OMP_NUM_THREADS="4" ./bin/matrixmult.o 2048 f2 >> outputs/omp/$ALGO\_2048_f2_$OMP_NUM_THREADS.txt
+OMP_NUM_THREADS="8" ./bin/matrixmult.o 2048 f2  >> outputs/omp/$ALGO\_2048_f2_$OMP_NUM_THREADS.txt
+OMP_NUM_THREADS="16" ./bin/matrixmult.o 2048 f2  >> outputs/omp/$ALGO\_2048_f2_$OMP_NUM_THREADS.txt
