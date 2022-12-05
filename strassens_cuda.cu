@@ -126,16 +126,16 @@ void strassen_multiply(double* a, double* b, double* mult, int d11, int d12, int
         cudaMemcpy(dB21,b21,(newSize*newSize)*(sizeof(double)),cudaMemcpyHostToDevice);
         cudaMemcpy(dB22,b22,(newSize*newSize)*(sizeof(double)),cudaMemcpyHostToDevice);
 
-        cudaMemcpy(dS1,s1,(newSize*newSize)*(sizeof(double)),cudaMemcpyHostToDevice);
-        cudaMemcpy(dS2,s2,(newSize*newSize)*(sizeof(double)),cudaMemcpyHostToDevice);
-        cudaMemcpy(dS3,s3,(newSize*newSize)*(sizeof(double)),cudaMemcpyHostToDevice);
-        cudaMemcpy(dS4,s4,(newSize*newSize)*(sizeof(double)),cudaMemcpyHostToDevice);
-        cudaMemcpy(dS5,s5,(newSize*newSize)*(sizeof(double)),cudaMemcpyHostToDevice);
-        cudaMemcpy(dS6,s6,(newSize*newSize)*(sizeof(double)),cudaMemcpyHostToDevice);
-        cudaMemcpy(dS7,s7,(newSize*newSize)*(sizeof(double)),cudaMemcpyHostToDevice);
-        cudaMemcpy(dS8,s8,(newSize*newSize)*(sizeof(double)),cudaMemcpyHostToDevice);
-        cudaMemcpy(dS9,s9,(newSize*newSize)*(sizeof(double)),cudaMemcpyHostToDevice);
-        cudaMemcpy(dS10,s10,(newSize*newSize)*(sizeof(double)),cudaMemcpyHostToDevice);
+        // cudaMemcpy(dS1,s1,(newSize*newSize)*(sizeof(double)),cudaMemcpyHostToDevice);
+        // cudaMemcpy(dS2,s2,(newSize*newSize)*(sizeof(double)),cudaMemcpyHostToDevice);
+        // cudaMemcpy(dS3,s3,(newSize*newSize)*(sizeof(double)),cudaMemcpyHostToDevice);
+        // cudaMemcpy(dS4,s4,(newSize*newSize)*(sizeof(double)),cudaMemcpyHostToDevice);
+        // cudaMemcpy(dS5,s5,(newSize*newSize)*(sizeof(double)),cudaMemcpyHostToDevice);
+        // cudaMemcpy(dS6,s6,(newSize*newSize)*(sizeof(double)),cudaMemcpyHostToDevice);
+        // cudaMemcpy(dS7,s7,(newSize*newSize)*(sizeof(double)),cudaMemcpyHostToDevice);
+        // cudaMemcpy(dS8,s8,(newSize*newSize)*(sizeof(double)),cudaMemcpyHostToDevice);
+        // cudaMemcpy(dS9,s9,(newSize*newSize)*(sizeof(double)),cudaMemcpyHostToDevice);
+        // cudaMemcpy(dS10,s10,(newSize*newSize)*(sizeof(double)),cudaMemcpyHostToDevice);
 
         dim3 tbp(8,8);
         dim3 numBlocks((newSize/tbp.x<1)? 1:newSize/tbp.x, (newSize/tbp.y<1)? 1:newSize/tbp.y);
