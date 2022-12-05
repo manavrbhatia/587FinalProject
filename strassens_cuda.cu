@@ -34,12 +34,19 @@ __global__ void gpu_sub(double *A, double *B, double *C, int size){
     }
 }
 
-void mult_small(double* a, double* b, double* c, int size){
-    for(int i = 0; i < size; ++i)
-        for(int j = 0; j < size; ++j)
-            for(int k = 0; k < size; ++k)
-                c[idx(i,j,size)] += a[idx(i,k,size)] * b[idx(k,j,size)];
+__global__ void mult_small(double *a, double *b, double *c, int size){
+    int row = blockIdx.y * blockDim.y + threadIdx.y;
+    int col = blockIdx.x * blockDim.x + threadIdx.x;
+
+    if((row < size) && (col  < size)){
+        double value = 0;
+        for(int k = 0; k < size; k++){
+            value += a[row*size + k] * b[k*size + col]; 
+        }
+        c[row*size + col] = value; 
+    }
 }
+
 
 void strassen_multiply(double* a, double* b, double* mult, int d11, int d12, int d22,int og_size) {
     for(int i = 0; i < d11; ++i)
@@ -47,7 +54,21 @@ void strassen_multiply(double* a, double* b, double* mult, int d11, int d12, int
             mult[idx(i,j,d11)]=0;
 
     if(d11 <= 32) {
-        mult_small(a,b,mult,d11);
+        double *da, *db, *dc;
+        cudaMalloc((void**)&da,(d11*d12)*sizeof(double));
+        cudaMalloc((void**)&db,(d12*d22)*sizeof(double));
+        cudaMalloc((void**)&dc,(d11*d22)*sizeof(double));
+
+        cudaMemcpy(da,a,(d11*d12)*(sizeof(double)),cudaMemcpyHostToDevice);
+        cudaMemcpy(db,b,(d12*d22)*(sizeof(double)),cudaMemcpyHostToDevice);
+        cudaMemcpy(dc,mult,(d11*d22)*(sizeof(double)),cudaMemcpyHostToDevice);
+
+        dim3 tbp(8,8);
+        dim3 numBlocks((d11/tbp.x<1)? 1:d11/tbp.x, (d11/tbp.y<1)? 1:d11/tbp.y);
+
+        mult_small <<< numBlocks, tbp >>> (da,db,dc,d11);
+        cudaMemcpy(mult,dc,(d11*d22)*(sizeof(double)),cudaMemcpyDeviceToHost);
+        
         return; 
     } else {
         int newSize = d11/2;
