@@ -1,6 +1,6 @@
 Size is 256 Function is f1
 Using function 1
-Time the function took is 0.07622ns
+Time the function took is 78.97424ns
 Output Matrix: 
 
 The sum retrieved was -34433.909576 and the square sum was 5803285.983471

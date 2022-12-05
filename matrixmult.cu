@@ -10,9 +10,10 @@
 
 //#include "naive_mm.cpp"
 //#include "omp_naive.cpp"
-#include "CUDA_mm.cu"
+//#include "CUDA_mm.cu"
 //#include "mpi_strassens.cpp"
 //#include "strassens_cpu.cpp"
+#include "strassens_cuda.cu"
 #define idx(x,y,M) (M*(x)+(y))
 
 using namespace std;

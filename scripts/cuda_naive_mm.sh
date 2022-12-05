@@ -9,7 +9,7 @@
 #SBATCH --account=eecs587f22_class
 #SBATCH --output=outputs/slurm-output.log
 
-ALGO="tiled_cuda"
+ALGO="strassens_cuda"
 
 nvcc -o bin/matrixmult_CUDA.o matrixmult.cu
 ./bin/matrixmult_CUDA.o 256 f1 > outputs/cuda/$ALGO\_256_f1.txt
