@@ -53,7 +53,7 @@ void strassen_multiply(double* a, double* b, double* mult, int d11, int d12, int
         for(int j = 0; j < d22; ++j)
             mult[idx(i,j,d11)]=0;
 
-    if(d11 <= 32) {
+    if(d11 <= 64) {
         double *da, *db, *dc;
         cudaMalloc((void**)&da,(d11*d12)*sizeof(double));
         cudaMalloc((void**)&db,(d12*d22)*sizeof(double));
@@ -68,7 +68,7 @@ void strassen_multiply(double* a, double* b, double* mult, int d11, int d12, int
 
         mult_small <<< numBlocks, tbp >>> (da,db,dc,d11);
         cudaMemcpy(mult,dc,(d11*d22)*(sizeof(double)),cudaMemcpyDeviceToHost);
-        
+
         return; 
     } else {
         int newSize = d11/2;
@@ -262,10 +262,10 @@ void strassen_multiply(double* a, double* b, double* mult, int d11, int d12, int
         cudaMemcpy(dp7,p7,(newSize*newSize)*(sizeof(double)),cudaMemcpyHostToDevice);
         cudaMemcpy(dtempA,tempA,(newSize*newSize)*(sizeof(double)),cudaMemcpyHostToDevice);
         cudaMemcpy(dtempB,tempB,(newSize*newSize)*(sizeof(double)),cudaMemcpyHostToDevice);
-        cudaMemcpy(dc11,c11,(newSize*newSize)*(sizeof(double)),cudaMemcpyHostToDevice);
-        cudaMemcpy(dc12,c12,(newSize*newSize)*(sizeof(double)),cudaMemcpyHostToDevice);
-        cudaMemcpy(dc21,c21,(newSize*newSize)*(sizeof(double)),cudaMemcpyHostToDevice);
-        cudaMemcpy(dc22,c22,(newSize*newSize)*(sizeof(double)),cudaMemcpyHostToDevice);
+        // cudaMemcpy(dc11,c11,(newSize*newSize)*(sizeof(double)),cudaMemcpyHostToDevice);
+        // cudaMemcpy(dc12,c12,(newSize*newSize)*(sizeof(double)),cudaMemcpyHostToDevice);
+        // cudaMemcpy(dc21,c21,(newSize*newSize)*(sizeof(double)),cudaMemcpyHostToDevice);
+        // cudaMemcpy(dc22,c22,(newSize*newSize)*(sizeof(double)),cudaMemcpyHostToDevice);
 
 
         // c11 = p1 + p2 - p4 + p6
