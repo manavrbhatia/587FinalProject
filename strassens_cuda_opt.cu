@@ -10,8 +10,9 @@ __global__ void gpu_add(double *A, double *B, double *C,
     int col = blockIdx.x * blockDim.x + threadIdx.x;
 
     if((row < size) && (col  < size)){
-        C[idx(row,col,size)] = A[idx(row+idx_Ar,col+idx_Ac,size)] + B[idx(row+idx_Br,col+idx_Bc,size)]; 
+        C[idx(row,col,size)] = A[idx(row+idx_Ar,col+idx_Ac,size*2)] + B[idx(row+idx_Br,col+idx_Bc,size*2)]; 
     }
+    __syncthreads();
 }
 
 __global__ void gpu_sub(double *A, double *B, double *C, 
@@ -21,8 +22,30 @@ __global__ void gpu_sub(double *A, double *B, double *C,
     int col = blockIdx.x * blockDim.x + threadIdx.x;
 
     if((row < size) && (col  < size)){
-        C[idx(row,col,size)] = A[idx(row+idx_Ar,col+idx_Ac,size)] - B[idx(row+idx_Br,col+idx_Bc,size)]; 
+        C[idx(row,col,size)] = A[idx(row+idx_Ar,col+idx_Ac,size*2)] - B[idx(row+idx_Br,col+idx_Bc,size*2)]; 
     }
+    __syncthreads();
+}
+
+__global__ void gpu_inc(double *B, double *C, int size){ 
+    int row = blockIdx.y * blockDim.y + threadIdx.y;
+    int col = blockIdx.x * blockDim.x + threadIdx.x;
+
+    if((row < size) && (col  < size)){
+        C[idx(row,col,size)] += B[idx(row,col,size)]; 
+    }
+    __syncthreads();
+}
+
+
+__global__ void gpu_dec(double *B, double *C, int size){ 
+    int row = blockIdx.y * blockDim.y + threadIdx.y;
+    int col = blockIdx.x * blockDim.x + threadIdx.x;
+
+    if((row < size) && (col  < size)){
+        C[idx(row,col,size)] -= B[idx(row,col,size)]; 
+    }
+    __syncthreads();
 }
 
 __global__ void gpu_ext(double *A, double *B, 
@@ -41,6 +64,7 @@ __global__ void gpu_ext(double *A, double *B,
         C_A21[idx(row,col,size)] = A[idx(row+idx_r,col+idx_c,size)]; 
         C_B21[idx(row,col,size)] = B[idx(row+idx_r,col+idx_c,size)]; 
     }
+    __syncthreads();
 }
 
 __global__ void mult_small(double *a, double *b, double *c, int size) {
@@ -50,10 +74,11 @@ __global__ void mult_small(double *a, double *b, double *c, int size) {
     if((row < size) && (col  < size)){
         double value = 0;
         for(int k = 0; k < size; k++){
-            value += a[idx(row,col+k,size)] * b[idx(row+k,col,size)]; 
+            value += a[idx(row,k,size)] * b[idx(k,col,size)]; 
         }
         c[idx(row,col,size)] = value; 
     }
+    __syncthreads();
 }
 
 __global__ void gpu_synth(double *c11, double *c12, double *c21, double *c22, double* mult, int newSize) {
@@ -67,6 +92,7 @@ __global__ void gpu_synth(double *c11, double *c12, double *c21, double *c22, do
         mult[idx((i + newSize),j,d11)] = c21[idx(i,j,newSize)];
         mult[idx((i + newSize),(j + newSize),d11)] = c22[idx(i,j,newSize)];
     }
+    __syncthreads();
 }
 
 void strassen_multiply(double* A, double* B, double* mult, int d11, cudaStream_t stream1, cudaStream_t stream2) {
@@ -101,20 +127,12 @@ void strassen_multiply(double* A, double* B, double* mult, int d11, cudaStream_t
         cudaMalloc((void**)&dc12,(newSize*newSize)*sizeof(double));
         cudaMalloc((void**)&dc21,(newSize*newSize)*sizeof(double));
         cudaMalloc((void**)&dc22,(newSize*newSize)*sizeof(double));
-        cudaMemset(dc11,0,(newSize*newSize)*sizeof(double));
-        cudaMemset(dc12,0,(newSize*newSize)*sizeof(double));
-        cudaMemset(dc21,0,(newSize*newSize)*sizeof(double));
-        cudaMemset(dc22,0,(newSize*newSize)*sizeof(double));
 
         double *dA11, *dB11, *dA22, *dB22;
         cudaMalloc((void**)&dA11,(newSize*newSize)*sizeof(double));
         cudaMalloc((void**)&dB11,(newSize*newSize)*sizeof(double));
         cudaMalloc((void**)&dA22,(newSize*newSize)*sizeof(double));
         cudaMalloc((void**)&dB22,(newSize*newSize)*sizeof(double));
-        cudaMemset(dA11,0,(newSize*newSize)*sizeof(double));
-        cudaMemset(dB11,0,(newSize*newSize)*sizeof(double));
-        cudaMemset(dA22,0,(newSize*newSize)*sizeof(double));
-        cudaMemset(dB22,0,(newSize*newSize)*sizeof(double));
 
         gpu_ext <<< numBlocks, tbp >>> (A, B, dA11, dB11, dA22, dB22, newSize);
 
@@ -123,60 +141,45 @@ void strassen_multiply(double* A, double* B, double* mult, int d11, cudaStream_t
         cudaMalloc((void**)&dS2,(newSize*newSize)*sizeof(double));
         cudaMalloc((void**)&dS3,(newSize*newSize)*sizeof(double));
         cudaMalloc((void**)&dS4,(newSize*newSize)*sizeof(double));
-        cudaMemset(dS1,0,(newSize*newSize)*sizeof(double));
-        cudaMemset(dS2,0,(newSize*newSize)*sizeof(double));
-        cudaMemset(dS3,0,(newSize*newSize)*sizeof(double));
-        cudaMemset(dS4,0,(newSize*newSize)*sizeof(double));
 
         // s1 = a21 - a11
         // s2 = b11 + b12
         gpu_sub <<< numBlocks, tbp, 0, stream1>>> (A, A, dS1, a21r, a21c, a11r, a11c, newSize);
         gpu_add <<< numBlocks, tbp, 0, stream1 >>> (B, B, dS2, b11r, b11c, b12r, b12c, newSize);
         strassen_multiply(dS1, dS2, dc22, newSize,stream1,stream1);
-        cudaMemset(dS1,0,(newSize*newSize)*sizeof(double));
-        cudaMemset(dS2,0,(newSize*newSize)*sizeof(double));
-        cudaStreamSynchronize(stream1);
+
+        // s1 = a21 + a22
+        gpu_add <<< numBlocks, tbp, 0, stream1 >>> (A, A, dS1, a21r, a21c, a22r, a22c, newSize);
+        strassen_multiply(dS1, dB11, dc21, newSize, stream1, stream1);
+        gpu_dec <<< numBlocks, tbp, 0, stream1 >>> (dc21, dc22, newSize);
 
         // s3 = a12 - a22
         // s4 = b21 + b22
         gpu_sub <<< numBlocks, tbp, 0, stream2 >>> (A, A, dS3, a12r, a12r, a22r, a22c, newSize);
         gpu_add <<< numBlocks, tbp, 0, stream2 >>> (B, B, dS4, b21r, b21c, b22r, b22c, newSize);
         strassen_multiply(dS3, dS4, dc11, newSize,stream2,stream2);
-        cudaMemset(dS3,0,(newSize*newSize)*sizeof(double));
-        cudaMemset(dS4,0,(newSize*newSize)*sizeof(double));
-        cudaStreamSynchronize(stream2);
-
-        // s1 = a21 + a22
-        gpu_add <<< numBlocks, tbp, 0, stream1 >>> (A, A, dS1, a21r, a21c, a22r, a22c, newSize);
-        strassen_multiply(dS1, dB11, dc21, newSize, stream1, stream1);
-        gpu_sub <<< numBlocks, tbp, 0, stream1 >>> (dc22, dc21, dc22, 0, 0, 0, 0, newSize);
-        cudaMemset(dS1,0,(newSize*newSize)*sizeof(double));
-        cudaStreamSynchronize(stream1);
 
         // s3 = a11 + a12
         gpu_add <<< numBlocks, tbp, 0, stream2 >>> (A, A, dS3, a11r,a11c, a12r, a12c, newSize);
         strassen_multiply(dS3, dB22, dc12, newSize, stream2, stream2);
-        gpu_sub <<< numBlocks, tbp, 0, stream2 >>> (dc11, dc12, dc11, 0, 0, 0, 0, newSize);
-        cudaMemset(dS3,0,(newSize*newSize)*sizeof(double));
+        gpu_dec <<< numBlocks, tbp, 0, stream2 >>> (dc12, dc11, newSize);
+
         cudaStreamSynchronize(stream2);
-
-
+        cudaStreamSynchronize(stream1);
+        
         // s1 = b12 - b22
         gpu_sub <<< numBlocks, tbp, 0, stream1 >>> (B, B, dS1, b12r, b12c, b22r, b22c, newSize);
         strassen_multiply(dA11, dS1, dS2, newSize, stream1, stream1);
-        gpu_add <<< numBlocks, tbp, 0, stream1 >>> (dc12, dS2, dc12, 0, 0, 0, 0, newSize);
-        gpu_add <<< numBlocks, tbp, 0, stream1 >>> (dc22, dS2, dc12, 0, 0, 0, 0, newSize);
-        cudaMemset(dS1,0,(newSize*newSize)*sizeof(double));
-        cudaMemset(dS2,0,(newSize*newSize)*sizeof(double));
-        cudaStreamSynchronize(stream1);
+        gpu_inc <<< numBlocks, tbp, 0, stream1 >>> (dS2, dc12, newSize);
+        gpu_inc <<< numBlocks, tbp, 0, stream1 >>> (dS2, dc22, newSize);
 
         // s3 = b21 - b11
         gpu_sub <<< numBlocks, tbp, 0, stream2 >>> (B, B, dS3, b21r, b21c, b11r, b11c, newSize);
         strassen_multiply(dA22, dS3, dS4, newSize, stream2, stream2);
-        gpu_add <<< numBlocks, tbp, 0, stream2 >>> (dc11, dS4, dc11, 0, 0, 0, 0, newSize);
-        gpu_add <<< numBlocks, tbp, 0, stream2 >>> (dc21, dS4, dc21, 0, 0, 0, 0, newSize);
-        cudaMemset(dS3,0,(newSize*newSize)*sizeof(double));
-        cudaMemset(dS4,0,(newSize*newSize)*sizeof(double));
+        gpu_inc <<< numBlocks, tbp, 0, stream2 >>> (dS4, dc11, newSize);
+        gpu_inc <<< numBlocks, tbp, 0, stream2 >>> (dS4, dc21, newSize);
+
+        cudaStreamSynchronize(stream1);
         cudaStreamSynchronize(stream2);
         
         // s1 = a11 + a22
@@ -186,9 +189,11 @@ void strassen_multiply(double* A, double* B, double* mult, int d11, cudaStream_t
         cudaStreamSynchronize(stream1);
         cudaStreamSynchronize(stream2);
         strassen_multiply(dS1, dS2, dS3, newSize, stream1, stream1);
-        gpu_add <<< numBlocks, tbp, 0, stream1 >>> (dc11, dS3, dc11, 0, 0, 0, 0, newSize);
-        gpu_add <<< numBlocks, tbp, 0, stream1 >>> (dc22, dS3, dc22, 0, 0, 0, 0, newSize);
+        gpu_inc <<< numBlocks, tbp, 0, stream1 >>> (dS3, dc11,newSize);
+        gpu_inc <<< numBlocks, tbp, 0, stream1 >>> (dS3, dc22,newSize);
 
+        cudaStreamSynchronize(stream1);
+        cudaStreamSynchronize(stream2);
         gpu_synth <<< numBlocks, tbp,0,stream1 >>> (dc11,dc12,dc21,dc22,mult,newSize);
 
         cudaFree(dS1);
