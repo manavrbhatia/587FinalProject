@@ -33,14 +33,23 @@ void sub(double* a, double* b, double* c, int size){
     }
 }
 
+void mult_small(double* a, double* b, double* c, int size){
+    #pragma omp parallel for 
+     for(int i = 0; i < size; ++i)
+         for(int j = 0; j < size; ++j)
+             for(int k = 0; k < size; ++k)
+                 c[idx(i,j,size)] += a[idx(i,k,size)] * b[idx(k,j,size)];
+}
+
 void mat_multiply(double* a, double* b, double* mult, int d11, int d12, int d22) {
     // Initializing elements of matrix mult to 0.
     for(int i = 0; i < d11; ++i)
         for(int j = 0; j < d22; ++j)
             mult[idx(i,j,d11)]=0;
 
-    if(d11 == 1){
-        mult[idx(0,0,d11)] = a[idx(0,0,d11)]*b[idx(0,0,d11)];
+    if(d11<= 64){
+        // mult[idx(0,0,d11)] = a[idx(0,0,d11)]*b[idx(0,0,d11)];
+        mult_small(a,b,mult,d11);
         return; 
     } else {
         int newSize = d11/2;
@@ -76,7 +85,7 @@ void mat_multiply(double* a, double* b, double* mult, int d11, int d12, int d22)
         double tempA[newSize*newSize];
         double tempB[newSize*newSize];
 
-        # pragma omp parallel for
+        #pragma omp parallel for
         for (int i = 0; i < newSize; i++) {
             for (int j = 0; j < newSize; j++) {
                 a11[idx(i,j,newSize)] = a[idx(i,j,d11)];
@@ -92,73 +101,79 @@ void mat_multiply(double* a, double* b, double* mult, int d11, int d12, int d22)
         }
 
         
-        # pragma omp parallel sections 
+        #pragma omp parallel
         {
-            // s1 = b12 - b22
-            #pragma omp section
-            sub(b12, b22, s1, newSize);
-            
-            // s2 = a11 + a12
-            #pragma omp section
-            add(a11, a12, s2, newSize);
-
-            // s3 = a21 + a22
-            #pragma omp section
-            add(a21, a22, s3, newSize);
-
-            // s4 = b21 - b11
-            #pragma omp section
-            sub(b21, b11, s4, newSize);
-            
-            // s5 = a11 + a22
-            #pragma omp section
-            add(a11, a22, s5, newSize);
-            
-            // s6 = b11 + b22
-            #pragma omp section
-            add(b11, b22, s6, newSize);
-
-            // s7 = a12 - a22
-            #pragma omp section
-            sub(a12, a22, s7, newSize);
-
-            // s8 = b21 + b22
-            #pragma omp section
-            add(b21, b22, s8, newSize);
-
-            // s9 = a11 - a21
-            #pragma omp section
-            sub(a11, a21, s9, newSize);
-
-            // s10 = b11 + b12
-            #pragma omp section
-            add(b11, b12, s10, newSize);
+            #pragma omp sections
+            {
+                // s1 = b12 - b22
+                #pragma omp section
+                sub(b12, b22, s1, newSize);
+                
+                // s2 = a11 + a12
+                #pragma omp section
+                add(a11, a12, s2, newSize);
+    
+                // s3 = a21 + a22
+                #pragma omp section
+                add(a21, a22, s3, newSize);
+    
+                // s4 = b21 - b11
+                #pragma omp section
+                sub(b21, b11, s4, newSize);
+                
+                // s5 = a11 + a22
+                #pragma omp section
+                add(a11, a22, s5, newSize);
+                
+                // s6 = b11 + b22
+                #pragma omp section
+                add(b11, b22, s6, newSize);
+    
+                // s7 = a12 - a22
+                #pragma omp section
+                sub(a12, a22, s7, newSize);
+    
+                // s8 = b21 + b22
+                #pragma omp section
+                add(b21, b22, s8, newSize);
+    
+                // s9 = a11 - a21
+                #pragma omp section
+                sub(a11, a21, s9, newSize);
+    
+                // s10 = b11 + b12
+                #pragma omp section
+                add(b11, b12, s10, newSize);
+            }
         }
 
-        if (d11!=8) {
-        # pragma omp parallel sections 
-        {
-            #pragma omp section
-            mat_multiply(s7, s8, p1, newSize, newSize, newSize);
-
-            #pragma omp section
-            mat_multiply(s5, s6, p2, newSize, newSize, newSize);
-
-            #pragma omp section
-            mat_multiply(s9, s10, p3, newSize, newSize, newSize);
-
-            #pragma omp section
-            mat_multiply(s2, b22, p4, newSize, newSize, newSize);
-
-            #pragma omp section
-            mat_multiply(a11, s1, p5, newSize, newSize, newSize);
-
-            #pragma omp section
-            mat_multiply(a22, s4, p6, newSize, newSize, newSize);
-
-            #pragma omp section
-            mat_multiply(s3, b11, p7, newSize, newSize, newSize);
-        }
+        if (d11<8) {
+            #pragma omp parallel 
+            {
+                #pragma omp sections
+                {
+                    #pragma omp section
+                    mat_multiply(s7, s8, p1, newSize, newSize, newSize);
+        
+                    #pragma omp section
+                    mat_multiply(s5, s6, p2, newSize, newSize, newSize);
+        
+                    #pragma omp section
+                    mat_multiply(s9, s10, p3, newSize, newSize, newSize);
+        
+                    #pragma omp section
+                    mat_multiply(s2, b22, p4, newSize, newSize, newSize);
+        
+                    #pragma omp section
+                    mat_multiply(a11, s1, p5, newSize, newSize, newSize);
+        
+                    #pragma omp section
+                    mat_multiply(a22, s4, p6, newSize, newSize, newSize);
+        
+                    #pragma omp section
+                    mat_multiply(s3, b11, p7, newSize, newSize, newSize);
+                }
+            }
         }
         else{
             mat_multiply(s7, s8, p1, newSize, newSize, newSize);
@@ -177,26 +192,27 @@ void mat_multiply(double* a, double* b, double* mult, int d11, int d12, int d22)
         }
 
 
-        }
-
-        # pragma omp parallel 
+        #pragma omp parallel 
         {
-        // c11 = p1 + p2 - p4 + p6
-            #pragma omp section 
+            #pragma omp sections
             {
-                add(p1, p2, tempA, newSize); // p1 + p2
-                add(tempA, p6, tempB, newSize); // (p1 + p2) + p6
-                sub(tempB, p4, c11, newSize); // (p5 + p4 + p6) - p2
+            // c11 = p1 + p2 - p4 + p6
+                #pragma omp section 
+                {
+                    add(p1, p2, tempA, newSize); // p1 + p2
+                    add(tempA, p6, tempB, newSize); // (p1 + p2) + p6
+                    sub(tempB, p4, c11, newSize); // (p5 + p4 + p6) - p2
+                }
+    
+                // c12 = p4 - p5
+                #pragma omp section
+                sub(p4, p5, c12, newSize);
+    
+                // c21 = p6 + p7
+                #pragma omp section
+                add(p6, p7, c21, newSize);
+    
             }
-
-            // c12 = p4 - p5
-            #pragma omp section
-            sub(p4, p5, c12, newSize);
-
-            // c21 = p6 + p7
-            #pragma omp section
-            add(p6, p7, c21, newSize);
-
         }
 
         // c22 = p2 - p3 + p5 - p7
@@ -204,7 +220,7 @@ void mat_multiply(double* a, double* b, double* mult, int d11, int d12, int d22)
         sub(tempA, p7, tempB, newSize); // (p2 - p3) - p7
         add(tempB, p5, c22, newSize); // (p2 - p3 - p7) + p5
 
-        # pragma omp parallel for
+        #pragma omp parallel for
         for (int i = 0; i < newSize ; i++) {
             for (int j = 0 ; j < newSize ; j++) {
                 mult[idx(i,j,d11)] = c11[idx(i,j,newSize)];
