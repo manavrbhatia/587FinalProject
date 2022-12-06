@@ -3,19 +3,6 @@
 #define idx(x,y,M) (M*(x)+(y))
 using namespace std;
 
-/* Performs strassens matrix multiplication using given matrices and their dimension.
- *
- * Returns a dynamically allocated flattened array for matrix containing result
- *
- * Arguments:
- * a,b: Matrices you want to multiple;
- * mult: Matrix you want to return results into;
- * int d11: Number of rows in a;
- * int d12: Number of columns in a, note that d12=d21 so dont need both;
- * int d22: Number of columns in b;
- * a * b = mult -> (d11,d12) * (d12,d22) = (d11,d22)
- */
-
 __global__ void gpu_add(double *A, double *B, double *C, int size){
     int row = blockIdx.y * blockDim.y + threadIdx.y;
     int col = blockIdx.x * blockDim.x + threadIdx.x;

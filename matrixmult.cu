@@ -14,6 +14,7 @@
 //#include "mpi_strassens.cpp"
 //#include "strassens_cpu.cpp"
 #include "strassens_cuda.cu"
+//#include "strassens_cuda_opt.cu"
 #define idx(x,y,M) (M*(x)+(y))
 
 using namespace std;
