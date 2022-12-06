@@ -17,25 +17,23 @@ using namespace std;
  */
 
 __global__ void gpu_add(double *A, double *B, double *C,
-        int idx_Ar, int idx_Br, 
-        int idx_Ac, int idx_Bc, int size) {
+        int idx_Ar, int idx_Ac, 
+        int idx_Br, int idx_Bc, int size) {
     int row = blockIdx.y * blockDim.y + threadIdx.y;
     int col = blockIdx.x * blockDim.x + threadIdx.x;
 
     if((row < size) && (col  < size)){
-        //C[idx(row+idx_Cr,col+idx_Cc,size)] = A[idx(row+idx_Ar,col+idx_Ac,size)] + B[idx(row+idx_Br,col+idx_Bc,size)]; 
         C[idx(row,col,size)] = A[idx(row+idx_Ar,col+idx_Ac,size)] + B[idx(row+idx_Br,col+idx_Bc,size)]; 
     }
 }
 
 __global__ void gpu_sub(double *A, double *B, double *C, 
-        int idx_Ar, int idx_Br,
-        int idx_Ac, int idx_Bc, int size) {
+        int idx_Ar, int idx_Ac,
+        int idx_Br, int idx_Bc, int size) {
     int row = blockIdx.y * blockDim.y + threadIdx.y;
     int col = blockIdx.x * blockDim.x + threadIdx.x;
 
     if((row < size) && (col  < size)){
-        //C[idx(row+idx_Cr,col+idx_Cc,size)] = A[idx(row+idx_Ar,col+idx_Ac,size)] - B[idx(row+idx_Br,col+idx_Bc,size)]; 
         C[idx(row,col,size)] = A[idx(row+idx_Ar,col+idx_Ac,size)] - B[idx(row+idx_Br,col+idx_Bc,size)]; 
     }
 }
@@ -51,52 +49,58 @@ __global__ void gpu_ext(double *A, double *B,
         C_A00[idx(row,col,size)] = A[idx(row+idx_r,col+idx_c,size)]; 
         C_B00[idx(row,col,size)] = B[idx(row+idx_r,col+idx_c,size)]; 
 
-        int idx_r = size; int idx_c = 0;
+        idx_r = size;
+        idx_c = 0;
         C_A21[idx(row,col,size)] = A[idx(row+idx_r,col+idx_c,size)]; 
         C_B21[idx(row,col,size)] = B[idx(row+idx_r,col+idx_c,size)]; 
     }
 }
 
 __global__ void mult_small(double *a, double *b, double *c,
-        int idx_Ar, int idx_Br, 
-        int idx_Ac, int idx_Bc, int size) {
+        int idx_Ar, int idx_Ac, 
+        int idx_Br, int idx_Bc, int size) {
     int row = blockIdx.y * blockDim.y + threadIdx.y;
     int col = blockIdx.x * blockDim.x + threadIdx.x;
 
     if((row < size) && (col  < size)){
         double value = 0;
         for(int k = 0; k < size; k++){
-            value += a[idx(row_idx_Ar,idx_Ac+k,size)] * b[idx(idx_Br+k,idx_Bc+col,size)]; 
+            value += a[idx(row+idx_Ar,col+idx_Ac+k,size)] * b[idx(idx_Br+row+k,idx_Bc+col,size)]; 
         }
         c[idx(row,col,size)] = value; 
     }
 }
 
-__global__ void gpu_synth(double *c11, double *c12, double *c21, double *c22, int mult, int size) {
+__global__ void gpu_synth(double *c11, double *c12, double *c21, double *c22, double* mult, int newSize) {
     int row = blockIdx.y * blockDim.y + threadIdx.y;
     int col = blockIdx.x * blockDim.x + threadIdx.x;
+    int d11 = 2*newSize;
 
-    if((row < size) && (col  < size)){
+    if((row < newSize) && (col  < newSize)){
         for (int i = 0; i < newSize ; i++) {
             for (int j = 0 ; j < newSize ; j++) {
                 mult[idx(i,j,d11)] = c11[idx(i,j,newSize)];
                 mult[idx(i,(j + newSize),d11)] = c12[idx(i,j,newSize)];
                 mult[idx((i + newSize),j,d11)] = c21[idx(i,j,newSize)];
                 mult[idx((i + newSize),(j + newSize),d11)] = c22[idx(i,j,newSize)];
+                //printf("%f ",mult[idx(i,j,d11)]);
             }
         }
     }
 }
 
-void strassen_multiply(double* a, double* b, double* mult, int d11) {
-    if(d11 <= 64) {
+void strassen_multiply(double* A, double* B, double* mult, int d11) {
+    if(d11 <= 32) {
         dim3 tbp(8,8);
         dim3 numBlocks((d11/tbp.x<1)? 1:d11/tbp.x, (d11/tbp.y<1)? 1:d11/tbp.y);
 
-        mult_small <<< numBlocks, tbp >>> (a,b,mult,0,0,0,0,d11);
+        mult_small <<< numBlocks, tbp >>> (A,B,mult,0,0,0,0,d11);
         return; 
     } else {
         int newSize = d11/2;
+        dim3 tbp(8,8);
+        dim3 numBlocks((newSize/tbp.x<1)? 1:newSize/tbp.x, (newSize/tbp.y<1)? 1:newSize/tbp.y);
+
         double a11r = 0;
         double a11c = 0;
 
@@ -140,22 +144,19 @@ void strassen_multiply(double* a, double* b, double* mult, int d11) {
         cudaMalloc((void**)&dS3,(newSize*newSize)*sizeof(double));
         cudaMalloc((void**)&dS4,(newSize*newSize)*sizeof(double));
 
-        dim3 tbp(8,8);
-        dim3 numBlocks((newSize/tbp.x<1)? 1:newSize/tbp.x, (newSize/tbp.y<1)? 1:newSize/tbp.y);
-
         // C11=s9*s10
         // s9 = a21 - a11
         // s10 = b11 + b12
         gpu_sub <<< numBlocks, tbp >>> (A, A, dS1, a21r, a21c, a11r, a11c, newSize);
         gpu_add <<< numBlocks, tbp >>> (B, B, dS2, b11r, b11c, b12r, b12c, newSize);
-        strassen_multiply(dS1, dS2, dc22, newSize, newSize, newSize, newSize);
+        strassen_multiply(dS1, dS2, dc22, newSize);
 
         // C22=s7*s8
         // s7 = a12 - a22
         // s8 = b21 + b22
         gpu_sub <<< numBlocks, tbp >>> (A, A, dS3, a12r, a12r, a22r, a22c, newSize);
         gpu_add <<< numBlocks, tbp >>> (B, B, dS4, b21r, b21c, b22r, b22c, newSize);
-        strassen_multiply(dS3, dS4, dc11, newSize, newSize, newSize, newSize);
+        strassen_multiply(dS3, dS4, dc11, newSize);
 
         // s3 = a21 + a22
         gpu_add <<< numBlocks, tbp >>> (A, A, dS1, a21r, a21c, a22r, a22c, newSize);
@@ -163,21 +164,21 @@ void strassen_multiply(double* a, double* b, double* mult, int d11) {
         gpu_sub <<< numBlocks, tbp >>> (dc22, dc21, dc22, 0, 0, 0, 0, newSize);
 
         // s2 = a11 + a12
-        gpu_add <<< numBlocks, tbp >>> (A, A, dS3, da11r, da11c, da12r, da12c, newSize);
-        strassen_multiply(dS3, dB22, dc12, newSize, newSize, newSize, newSize);
+        gpu_add <<< numBlocks, tbp >>> (A, A, dS3, a11r,a11c, a12r, a12c, newSize);
+        strassen_multiply(dS3, dB22, dc12, newSize);
         gpu_sub <<< numBlocks, tbp >>> (dc11, dc12, dc11, 0, 0, 0, 0, newSize);
 
 
 
         // s1 = b12 - b22
-        gpu_sub <<< numBlocks, tbp >>> (B, B, dS1, db12r, db12c, db22r, db22c, newSize);
-        strassen_multiply(dA11, dS1, dS2, newSize, newSize, newSize, newSize);
+        gpu_sub <<< numBlocks, tbp >>> (B, B, dS1, b12r, b12c, b22r, b22c, newSize);
+        strassen_multiply(dA11, dS1, dS2, newSize);
         gpu_add <<< numBlocks, tbp >>> (dc12, dS2, dc12, 0, 0, 0, 0, newSize);
         gpu_add <<< numBlocks, tbp >>> (dc22, dS2, dc12, 0, 0, 0, 0, newSize);
 
         // s4 = b21 - b11
         gpu_sub <<< numBlocks, tbp >>> (B, B, dS3, b21r, b21c, b11r, b11c, newSize);
-        strassen_multiply(dA22, s4, dS4, newSize, newSize, newSize, newSize);
+        strassen_multiply(dA22, dS3, dS4, newSize);
         gpu_add <<< numBlocks, tbp >>> (dc11, dS4, dc11, 0, 0, 0, 0, newSize);
         gpu_add <<< numBlocks, tbp >>> (dc21, dS4, dc21, 0, 0, 0, 0, newSize);
         
@@ -185,7 +186,7 @@ void strassen_multiply(double* a, double* b, double* mult, int d11) {
         // s6 = b11 + b22
         gpu_add <<< numBlocks, tbp >>> (A, A, dS1, a11r, a11c, a22r, a22c, newSize);
         gpu_add <<< numBlocks, tbp >>> (B, B, dS2, b11r, b11c, b22r, b22c, newSize);
-        strassen_multiply(dS1, dS2, dS3, newSize, newSize, newSize, newSize);
+        strassen_multiply(dS1, dS2, dS3, newSize);
         gpu_add <<< numBlocks, tbp >>> (dc11, dS3, dc11, 0, 0, 0, 0, newSize);
         gpu_add <<< numBlocks, tbp >>> (dc22, dS3, dc22, 0, 0, 0, 0, newSize);
 
@@ -196,26 +197,28 @@ void strassen_multiply(double* a, double* b, double* mult, int d11) {
         cudaFree(dS3);
         cudaFree(dS4);
 
-        cudaMemcpy(c11,dc11,(newSize*newSize)*(sizeof(double)),cudaMemcpyDeviceToHost);
-        cudaMemcpy(c12,dc12,(newSize*newSize)*(sizeof(double)),cudaMemcpyDeviceToHost);
-        cudaMemcpy(c21,dc21,(newSize*newSize)*(sizeof(double)),cudaMemcpyDeviceToHost);
-        cudaMemcpy(c22,dc22,(newSize*newSize)*(sizeof(double)),cudaMemcpyDeviceToHost);
+        gpu_synth <<< numBlocks, tbp >>> (dc11,dc12,dc21,dc22,mult,newSize);
 
         cudaFree(dc11);
         cudaFree(dc12);
         cudaFree(dc21);
         cudaFree(dc22);
 
-        gpu_synth <<< numBlocks, tbp >>> (dc11,dc12,dc21,dc22,mult);
+        return;
     }
 }
 
 void strassen_root(double* a, double* b, double* mult, int d11) {
-    double * da, db, dc;
+    double *da, *db, *dc;
+
     cudaMalloc((void**)&da,(d11*d11)*sizeof(double));
+    cudaMemcpy(da,a,(d11*d11)*(sizeof(double)),cudaMemcpyHostToDevice);
+
     cudaMalloc((void**)&db,(d11*d11)*sizeof(double));
+    cudaMemcpy(db,b,(d11*d11)*(sizeof(double)),cudaMemcpyHostToDevice);
+
     cudaMalloc((void**)&dc,(d11*d11)*sizeof(double));
-    strassen_mult(da,db,dc,d11);
+    strassen_multiply(da,db,dc,d11);
     cudaMemcpy(mult,dc,(d11*d11)*(sizeof(double)),cudaMemcpyDeviceToHost);
 
 }
@@ -228,7 +231,7 @@ void mat_multiply(double* a, double* b, double* mult, int d11, int d12, int d22)
     cudaEventCreate(&time_e);
 
     cudaEventRecord(time_s);
-    strassen_root(a,b,mult,d11,d12,d22,d11);
+    strassen_root(a,b,mult,d11);
     cudaEventRecord(time_e);
     cudaEventSynchronize(time_e);
 
